@@ -37,12 +37,13 @@ void init_mmu() {
 void kern_init(uint64_t hartid, uint64_t dtb_pa) {
   printf(banner);
 
-  printf("hartid: %d\n", hartid);
-  printf("dtb_pa: %p\n", dtb_pa);
-  printf("kernel: %p - %p\n", _skernel, _ekernel);
+  printf("hartid:     %d\n", hartid);
+  printf("dtb_pa:     %p\n", dtb_pa);
+  printf("kernel:     %p - %p\n", _skernel, _ekernel);
   printf("trap_entry: %p\n", trap_entry);
-  printf("kern_init: %p\n", kern_init);
+  printf("kern_init:  %p\n", kern_init);
   printf("boot_pgtbl: %p\n", boot_pgtbl);
+  printf("sp:         %p\n", read_gpr(sp));
 
   // set stvec
   write_csr(stvec, (uint64_t)trap_entry);

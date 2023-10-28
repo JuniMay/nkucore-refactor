@@ -48,4 +48,11 @@
 
 #define clear_csr(reg, bit) write_csr(reg, read_csr(reg) & ~(bit))
 
+#define read_gpr(reg) \
+  ({                  \
+    unsigned long __tmp; \
+    asm volatile("mv %0, " #reg : "=r"(__tmp)); \
+    __tmp; \
+  })
+
 #endif  // KERNEL_RISCV_H_
