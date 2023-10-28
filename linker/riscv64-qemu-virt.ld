@@ -1,5 +1,5 @@
 OUTPUT_ARCH(riscv)
-ENTRY(_entry)
+ENTRY(kernel_entry)
 
 BASE_ADDRESS = 0xffffffffc0200000;
 

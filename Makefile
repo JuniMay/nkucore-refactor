@@ -53,7 +53,7 @@ $(BUILD_DIR)/kernel.elf: $(KERNEL_OBJS) $(KERNEL_LDSCRIPT)
 	$(LD) -z max-page-size=4096 -T $(KERNEL_LDSCRIPT) $(KERNEL_OBJS) -o $@
 
 $(KERNEL_IMG): $(BUILD_DIR)/kernel.elf
-	$(OBJCOPY) -O binary $< $@
+	$(OBJCOPY) --strip-all -O binary $< $@
 
 build: init $(KERNEL_IMG)
 

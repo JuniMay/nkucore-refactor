@@ -24,6 +24,16 @@ extern char _ekernel[];
 extern char trap_entry[];
 extern uint64_t boot_pgtbl[];
 
+void init_boot_pgtbl() {
+  boot_pgtbl[2] = (0x80000 << 10) | 0xef;
+  boot_pgtbl[511] = (0x80000 << 10) | 0xef;
+}
+
+void init_mmu() {
+  write_csr(satp, ((uint64_t)boot_pgtbl >> 12) | (8UL << 60));
+  asm volatile("sfence.vma");
+}
+
 void kern_init(uint64_t hartid, uint64_t dtb_pa) {
   printf(banner);
 
