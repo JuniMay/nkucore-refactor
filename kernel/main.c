@@ -1,10 +1,10 @@
 #include "clock.h"
+#include "libs/printf.h"
+#include "libs/riscv.h"
+#include "libs/sbi.h"
+#include "libs/types.h"
 #include "mem.h"
-#include "printf.h"
-#include "riscv.h"
-#include "sbi.h"
 #include "trap.h"
-#include "types.h"
 
 const char banner[] =
   "\n"

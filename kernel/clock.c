@@ -1,7 +1,7 @@
 #include "clock.h"
-#include "printf.h"
-#include "riscv.h"
-#include "sbi.h"
+#include "libs/printf.h"
+#include "libs/riscv.h"
+#include "libs/sbi.h"
 
 static uint64_t timebase = 0;
 
@@ -15,7 +15,7 @@ void clock_init() {
   timebase = 1e7 / 100;
   clock_set_next_event();
   set_csr(sie, MIP_STIP);
-  
+
   printf("[ clock init ] set up timer interrupts\n");
 }
 

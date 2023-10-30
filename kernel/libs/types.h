@@ -1,5 +1,5 @@
-#ifndef KERNEL_TYPES_H_
-#define KERNEL_TYPES_H_
+#ifndef KERNEL_LIBS_TYPES_H_
+#define KERNEL_LIBS_TYPES_H_
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -20,4 +20,4 @@ typedef int bool;
 
 #define NULL ((void*)0)
 
-#endif  // KERNEL_TYPES_H_
+#endif  // KERNEL_LIBS_TYPES_H_

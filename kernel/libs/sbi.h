@@ -1,7 +1,7 @@
-#ifndef KERNEL_SBI_H_
-#define KERNEL_SBI_H_
+#ifndef KERNEL_LIBS_SBI_H_
+#define KERNEL_LIBS_SBI_H_
 
-#include "types.h"
+#include "libs/types.h"
 
 #define SBI_SET_TIMER 0
 #define SBI_CONSOLE_PUTCHAR 1

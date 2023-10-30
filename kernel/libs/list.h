@@ -1,5 +1,5 @@
-#ifndef KERNEL_LIST_H_
-#define KERNEL_LIST_H_
+#ifndef KERNEL_LIBS_LIST_H_
+#define KERNEL_LIBS_LIST_H_
 
 #define offset_of(type, member) ((size_t)(&((type*)0)->member))
 
@@ -38,4 +38,4 @@ static inline int list_empty(list_entry_t* list) {
   return list->next == list;
 }
 
-#endif  // KERNEL_LIST_H_
+#endif  // KERNEL_LIBS_LIST_H_

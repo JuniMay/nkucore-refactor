@@ -1,10 +1,10 @@
 #ifndef KERNEL_MEM_H_
 #define KERNEL_MEM_H_
 
-#include "list.h"
-#include "types.h"
 #include "config.h"
-#include "riscv.h"
+#include "libs/list.h"
+#include "libs/riscv.h"
+#include "libs/types.h"
 
 /// Convert a virtual address to a physical address.
 static inline uint64_t virt_to_phys(uint64_t vaddr) {
@@ -27,12 +27,12 @@ static inline uint64_t align_up(uint64_t addr, uint64_t align) {
 }
 
 /// The 0 bit of flags indicates whether the page is reserved or not.
-#define PG_RESERVED 0x0
+#define PG_RESERVED 0x1
 
 /// The 1 bit of flags indicates whether the page can be allocated or not.
-/// 
+///
 /// A page is allocable only if it is the head of a free block.
-#define PG_ALLOCABLE 0x1
+#define PG_ALLOCABLE 0x2
 
 /// A page descriptor
 typedef struct {
@@ -48,29 +48,18 @@ typedef struct {
   list_entry_t link;
 } page_t;
 
-static inline void page_set_reserved(page_t* page) {
-  amo_set_bit(PG_RESERVED, &page->flags);
+static inline void page_set_flags(page_t* page, uint64_t bits) {
+  amo_set_bits(bits, &page->flags);
 }
 
-static inline void page_clear_reserved(page_t* page) {
-  amo_clear_bit(PG_RESERVED, &page->flags);
+static inline void page_clear_flags(page_t* page, uint64_t bits) {
+  amo_clear_bits(bits, &page->flags);
 }
 
-static inline bool page_is_reserved(page_t* page) {
-  return amo_test_bit(PG_RESERVED, &page->flags);
+static inline bool page_test_flags(page_t* page, uint64_t bits) {
+  return amo_test_bits(bits, &page->flags);
 }
 
-static inline void page_set_allocable(page_t* page) {
-  amo_set_bit(PG_ALLOCABLE, &page->flags);
-}
-
-static inline void page_clear_allocable(page_t* page) {
-  amo_clear_bit(PG_ALLOCABLE, &page->flags);
-}
-
-static inline bool page_is_allocable(page_t* page) {
-  return amo_test_bit(PG_ALLOCABLE, &page->flags);
-}
 /// Free area
 typedef struct {
   /// Head of the free list
@@ -84,7 +73,7 @@ typedef struct {
 /// Assume the memory is flat.
 typedef struct {
   /// Name of the manager/
-  const char *name;
+  const char* name;
 
   /// Initialize the manager.
   void (*init)();
@@ -100,12 +89,12 @@ typedef struct {
 
   /// Number of free pages.
   size_t (*num_free_pages)(void);
-} pmm_t;
+} page_allocator_t;
 
 extern page_t* page_array;
 extern size_t num_total_pages;
 
-extern pmm_t *pmm;
+extern page_allocator_t* pmm;
 
 /// Initailize the physical memory manager.
 void init_pmm();

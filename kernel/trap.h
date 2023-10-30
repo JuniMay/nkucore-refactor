@@ -1,7 +1,7 @@
 #ifndef KERNEL_TRAP_H_
 #define KERNEL_TRAP_H_
 
-#include "types.h"
+#include "libs/types.h"
 
 typedef struct {
     uint64_t gprs[31];

@@ -1,7 +1,7 @@
-#ifndef KERNEL_RISCV_H_
-#define KERNEL_RISCV_H_
+#ifndef KERNEL_LIBS_RISCV_H_
+#define KERNEL_LIBS_RISCV_H_
 
-#include "types.h"
+#include "libs/types.h"
 
 #define IRQ_U_SOFT 0
 #define IRQ_S_SOFT 1
@@ -85,20 +85,20 @@ static inline void restore_interrupts(bool enabled) {
 }
 
 /// Atomically set bit of the value at addr using amoor
-static inline void amo_set_bit(uint64_t bit, volatile void* addr) {
+static inline void amo_set_bits(uint64_t bit, volatile void* addr) {
   asm volatile("amoor.d zero, %0, %1" ::"r"(bit), "A"(addr));
 }
 
 /// Atomically clear bit of the value at addr.
-static inline void amo_clear_bit(uint64_t bit, volatile void* addr) {
+static inline void amo_clear_bits(uint64_t bit, volatile void* addr) {
   asm volatile("amoand.d zero, %0, %1" ::"r"(~bit), "A"(addr));
 }
 
 /// Atomically test bit of the value at addr.
-static inline bool amo_test_bit(uint64_t bit, volatile void* addr) {
+static inline bool amo_test_bits(uint64_t bit, volatile void* addr) {
   uint64_t tmp;
   asm volatile("amoand.d %0, %1, %2" : "=r"(tmp) : "r"(bit), "A"(addr));
   return tmp != 0;
 }
 
-#endif  // KERNEL_RISCV_H_
+#endif  // KERNEL_LIBS_RISCV_H_

@@ -1,15 +1,15 @@
 #include "mem.h"
 #include "config.h"
-#include "printf.h"
-#include "riscv.h"
+#include "libs/printf.h"
+#include "libs/riscv.h"
 
-#include "pmms/first_fit.h"
+#include "allocators/first_fit.h"
 
 page_t* page_array;
 size_t num_total_pages;
 free_area_t free_area;
 
-pmm_t* pmm = &pmm_first_fit;
+page_allocator_t* page_allocator = &first_fit_page_allocator;
 
 void init_pmm() {
   extern char _skernel[];
@@ -29,7 +29,7 @@ void init_pmm() {
   page_array = (page_t*)align_up(kernel_ed_vaddr, PGSIZE);
 
   for (size_t i = 0; i < num_total_pages; i++) {
-    page_set_reserved(page_array + i);
+    page_set_flags(page_array + i, PG_RESERVED);
   }
 
   uint64_t allocable_mem_st_vaddr =
@@ -48,17 +48,22 @@ void init_pmm() {
   printf("[ init_pmm ] allocable pages:  %d\n", (allocable_mem_ed_paddr - allocable_mem_st_paddr) / PGSIZE);
   // clang-format on
 
-  pmm->init();
-  pmm->init_memmap(
+  page_allocator->init();
+  page_allocator->init_memmap(
     paddr_to_page(allocable_mem_st_paddr),
     (allocable_mem_ed_paddr - allocable_mem_st_paddr) / PGSIZE
   );
 }
 
 page_t* alloc_pages(size_t n) {
-  return NULL;
+  bool interrupts_enabled = save_interrupts();
+  page_t* page = page_allocator->alloc_pages(n);
+  restore_interrupts(interrupts_enabled);
+  return page;
 }
 
 void free_pages(page_t* base, size_t n) {
-  // TODO
+  bool interrupts_enabled = save_interrupts();
+  page_allocator->free_pages(base, n);
+  restore_interrupts(interrupts_enabled);
 }

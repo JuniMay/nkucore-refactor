@@ -1,8 +1,8 @@
 #include "trap.h"
-#include "printf.h"
-#include "riscv.h"
 #include "clock.h"
-#include "sbi.h"
+#include "libs/printf.h"
+#include "libs/riscv.h"
+#include "libs/sbi.h"
 
 static int clock_ticks = 0;
 
