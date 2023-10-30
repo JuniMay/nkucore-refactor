@@ -11,7 +11,7 @@ typedef struct {
 
 void trap_handler(trapframe_t* trapframe);
 
-void interrupt_handler(trapframe_t* trapframe);
-void exception_handler(trapframe_t* trapframe);
+void interrupt_handler(trapframe_t* trapframe, uint64_t scause);
+void exception_handler(trapframe_t* trapframe, uint64_t scause);
 
 #endif  // KERNEL_TRAP_H_

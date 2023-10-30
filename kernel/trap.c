@@ -3,12 +3,11 @@
 #include "libs/printf.h"
 #include "libs/riscv.h"
 #include "libs/sbi.h"
+#include "libs/panic.h"
 
 static int clock_ticks = 0;
 
-void interrupt_handler(trapframe_t* trapframe) {
-  uint64_t scause = read_csr(scause);
-
+void interrupt_handler(trapframe_t* trapframe, uint64_t scause) {
   uint64_t cause = scause & ~(1UL << 63);
 
   switch (cause) {
@@ -22,25 +21,23 @@ void interrupt_handler(trapframe_t* trapframe) {
       break;
     }
     default: {
-      printf("unhandled interrupt: %p\n", scause);
-      sbi_shutdown();
+      panic("unhandled interrupt: %p\n", scause);
       break;
     }
   }
 }
 
-void exception_handler(trapframe_t* trapframe) {
-  uint64_t scause = read_csr(scause);
-  printf("unhandled exception: %d\n", scause);
+void exception_handler(trapframe_t* trapframe, uint64_t scause) {
+  panic("unhandled exception: %p\n", scause);
 }
 
 void trap_handler(trapframe_t* trapframe) {
   uint64_t scause = read_csr(scause);
   if (scause & (1UL << 63)) {
     // interrupt
-    interrupt_handler(trapframe);
+    interrupt_handler(trapframe, scause);
   } else {
     // exception
-    exception_handler(trapframe);
+    exception_handler(trapframe, scause);
   }
 }

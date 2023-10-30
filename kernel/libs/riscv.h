@@ -69,7 +69,7 @@ static inline void disable_interrupts() {
 }
 
 static inline bool interrupts_enabled() {
-  return read_csr(mstatus) & SSTATUS_SIE;
+  return read_csr(sstatus) & SSTATUS_SIE;
 }
 
 static inline bool save_interrupts() {

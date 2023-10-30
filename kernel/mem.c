@@ -2,6 +2,7 @@
 #include "config.h"
 #include "libs/printf.h"
 #include "libs/riscv.h"
+#include "libs/panic.h"
 
 #include "allocators/first_fit.h"
 
@@ -10,6 +11,21 @@ size_t num_total_pages;
 free_area_t free_area;
 
 page_allocator_t* page_allocator = &first_fit_page_allocator;
+
+static void check_pmm() {
+  printf("[ check_pmm ] checking pmm...\n");
+
+  page_t* page = alloc_pages(1);
+  if (page == NULL) {
+    panic("failed to allocate a page\n");
+  }
+  printf("[ check_pmm ] allocated a page: %p\n", page);
+
+  free_pages(page, 1);
+  printf("[ check_pmm ] freed a page: %p\n", page);
+
+  printf("[ check_pmm ] pmm is ok\n");
+}
 
 void init_pmm() {
   extern char _skernel[];
@@ -53,6 +69,8 @@ void init_pmm() {
     paddr_to_page(allocable_mem_st_paddr),
     (allocable_mem_ed_paddr - allocable_mem_st_paddr) / PGSIZE
   );
+
+  check_pmm();
 }
 
 page_t* alloc_pages(size_t n) {

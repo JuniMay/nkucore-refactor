@@ -65,3 +65,9 @@ clean:
 
 qemu: build
 	$(QEMU) $(QEMU_ARGS)
+
+debug: build
+	$(QEMU) $(QEMU_ARGS) -S -s
+
+gdb: build
+	$(GDB) -ex "target remote localhost:1234" -ex "symbol $(BUILD_DIR)/kernel.elf"
