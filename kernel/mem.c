@@ -15,16 +15,67 @@ page_allocator_t* page_allocator = &first_fit_page_allocator;
 static void check_pmm() {
   printf("[ check_pmm ] checking pmm...\n");
 
-  page_t* page = alloc_pages(1);
-  if (page == NULL) {
-    panic("failed to allocate a page\n");
-  }
-  printf("[ check_pmm ] allocated a page: %p\n", page);
+  page_t *p0, *p1, *p2;
 
-  free_pages(page, 1);
-  printf("[ check_pmm ] freed a page: %p\n", page);
+  size_t num_free_pages = page_allocator->num_free_pages();
 
-  printf("[ check_pmm ] pmm is ok\n");
+  p0 = alloc_pages(1);
+  p1 = alloc_pages(1);
+  p2 = alloc_pages(1);
+
+  assert(p0 != NULL);
+  assert(p1 != NULL);
+  assert(p2 != NULL);
+
+  assert(p0->num_pages == 1);
+  assert(p1->num_pages == 1);
+  assert(p2->num_pages == 1);
+
+  printf("[ check_pmm ] p0 vaddr: %p\n", p0);
+  printf("[ check_pmm ] p1 vaddr: %p\n", p1);
+  printf("[ check_pmm ] p2 vaddr: %p\n", p2);
+
+  printf("[ check_pmm ] p0 paddr: %p\n", page_to_paddr(p0));
+  printf("[ check_pmm ] p1 paddr: %p\n", page_to_paddr(p1));
+  printf("[ check_pmm ] p2 paddr: %p\n", page_to_paddr(p2));
+
+  free_pages(p0, 1);
+  free_pages(p1, 1);
+  free_pages(p2, 1);
+
+  assert(page_allocator->num_free_pages() == num_free_pages);
+
+  printf("[ check_pmm ] testcase 0 passed.\n");
+
+  p0 = alloc_pages(123);
+  p1 = alloc_pages(256);
+  p2 = alloc_pages(179);
+
+  assert(p0 != NULL);
+  assert(p1 != NULL);
+  assert(p2 != NULL);
+
+  assert(p0->num_pages == 123);
+  assert(p1->num_pages == 256);
+  assert(p2->num_pages == 179);
+
+  printf("[ check_pmm ] p0 vaddr: %p\n", p0);
+  printf("[ check_pmm ] p1 vaddr: %p\n", p1);
+  printf("[ check_pmm ] p2 vaddr: %p\n", p2);
+
+  printf("[ check_pmm ] p0 paddr: %p\n", page_to_paddr(p0));
+  printf("[ check_pmm ] p1 paddr: %p\n", page_to_paddr(p1));
+  printf("[ check_pmm ] p2 paddr: %p\n", page_to_paddr(p2));
+
+  free_pages(p0, 123);
+  free_pages(p1, 256);
+  free_pages(p2, 179);
+
+  assert(page_allocator->num_free_pages() == num_free_pages);
+  
+  printf("[ check_pmm ] testcase 1 passed.\n");
+
+  printf("[ check_pmm ] all passed.\n");
 }
 
 void init_pmm() {

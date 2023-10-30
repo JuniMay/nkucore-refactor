@@ -106,7 +106,11 @@ page_t* alloc_pages(size_t n);
 void free_pages(page_t* base, size_t n);
 
 static inline page_t* paddr_to_page(uint64_t paddr) {
-  return &page_array[(paddr - MEMORY_START_PADDR) / PGSIZE];
+  return &page_array[(paddr - MEMORY_START_PADDR) >> PGSHIFT];
+}
+
+static inline uint64_t page_to_paddr(page_t* page) {
+  return ((page - page_array) << PGSHIFT) + MEMORY_START_PADDR;
 }
 
 #endif
