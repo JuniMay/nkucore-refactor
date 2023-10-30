@@ -11,4 +11,11 @@ typedef short int16_t;
 typedef int int32_t;
 typedef long int64_t;
 
+typedef uint64_t size_t;
+
+typedef int bool;
+
+#define true 1
+#define false 0
+
 #endif  // KERNEL_TYPES_H_

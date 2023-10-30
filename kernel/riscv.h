@@ -1,6 +1,8 @@
 #ifndef KERNEL_RISCV_H_
 #define KERNEL_RISCV_H_
 
+#include "types.h"
+
 #define IRQ_U_SOFT 0
 #define IRQ_S_SOFT 1
 #define IRQ_H_SOFT 2
@@ -35,6 +37,9 @@
 
 #define SSTATUS_SIE 0x00000002
 
+#define PGSIZE 4096
+#define PGSHIFT 12
+
 #define write_csr(reg, val) asm volatile("csrw " #reg ", %0" ::"r"(val))
 
 #define read_csr(reg)                             \
@@ -54,5 +59,29 @@
     asm volatile("mv %0, " #reg : "=r"(__tmp)); \
     __tmp; \
   })
+
+static inline void enable_interrupts() {
+  set_csr(sstatus, SSTATUS_SIE);
+}
+
+static inline void disable_interrupts() {
+  clear_csr(sstatus, SSTATUS_SIE);
+}
+
+static inline bool interrupts_enabled() {
+  return read_csr(mstatus) & SSTATUS_SIE;
+}
+
+static inline bool save_interrupts() {
+  bool enabled = interrupts_enabled();
+  disable_interrupts();
+  return enabled;
+}
+
+static inline void restore_interrupts(bool enabled) {
+  if (enabled) {
+    enable_interrupts();
+  }
+}
 
 #endif  // KERNEL_RISCV_H_

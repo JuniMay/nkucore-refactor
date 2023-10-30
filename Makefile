@@ -1,4 +1,3 @@
-
 TOOLCHAIN_PREFIX = riscv64-unknown-elf-
 
 PLATFORM = riscv64-qemu-virt
@@ -17,16 +16,17 @@ GDB = gdb-multiarch
 KERNEL_INC_DIR = kernel
 KERNEL_SRC_DIR = kernel
 
-# kernel source directory is flatten, just wildcard all .c/.s files
-KERNEL_SRC_C = $(wildcard $(KERNEL_SRC_DIR)/*.c)
-KERNEL_SRC_ASM = $(wildcard $(KERNEL_SRC_DIR)/*.s)
+# Use find to support multiple directory levels
+KERNEL_SRC_C = $(shell find $(KERNEL_SRC_DIR) -name *.c)
+KERNEL_SRC_ASM = $(shell find $(KERNEL_SRC_DIR) -name *.s)
 
-KERNEL_OBJ_C = $(addprefix $(BUILD_DIR)/, $(notdir $(KERNEL_SRC_C:.c=.o)))
-KERNEL_OBJ_ASM += $(addprefix $(BUILD_DIR)/, $(notdir $(KERNEL_SRC_ASM:.s=.o)))
+# Modify object file targets to retain directory structure
+KERNEL_OBJ_C = $(patsubst $(KERNEL_SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(KERNEL_SRC_C))
+KERNEL_OBJ_ASM = $(patsubst $(KERNEL_SRC_DIR)/%.s,$(BUILD_DIR)/%.o,$(KERNEL_SRC_ASM))
 
 KERNEL_OBJS = $(KERNEL_OBJ_C) $(KERNEL_OBJ_ASM)
 
-KERNEL_CFLAGS = -Wall -Werror -O -g -mcmodel=medany
+KERNEL_CFLAGS = -Wall -O -g -mcmodel=medany
 KERNEL_CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax -fno-stack-protector -fno-pie -no-pie
 KERNEL_CFLAGS += -I$(KERNEL_INC_DIR)
 
@@ -43,10 +43,13 @@ QEMU_ARGS = -machine virt -nographic -bios $(BOOTLOADER) -kernel $(KERNEL_IMG)
 
 all: build
 
-$(KERNEL_OBJ_C): $(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.c
+# Adjust rules to account for directory structure
+$(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.c
+	mkdir -p $(dir $@)
 	$(CC) $(KERNEL_CFLAGS) -c $< -o $@
 
-$(KERNEL_OBJ_ASM): $(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.s
+$(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.s
+	mkdir -p $(dir $@)
 	$(AS) $(KERNEL_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/kernel.elf: $(KERNEL_OBJS) $(KERNEL_LDSCRIPT)
@@ -55,13 +58,10 @@ $(BUILD_DIR)/kernel.elf: $(KERNEL_OBJS) $(KERNEL_LDSCRIPT)
 $(KERNEL_IMG): $(BUILD_DIR)/kernel.elf
 	$(OBJCOPY) --strip-all -O binary $< $@
 
-build: init $(KERNEL_IMG)
+build: $(KERNEL_IMG)
 
 clean:
 	rm -rf $(BUILD_DIR)
 
 qemu: build
 	$(QEMU) $(QEMU_ARGS)
-
-init:
-	mkdir -p $(BUILD_DIR)

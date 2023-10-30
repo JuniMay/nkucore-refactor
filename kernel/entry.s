@@ -8,6 +8,9 @@ kernel_entry:
   mv s0, a0
   mv s1, a1
 
+  # load physical address of sp
+  la sp, bootstacktop
+
   # set up page table
   call init_boot_pgtbl
   # set up satp
@@ -16,8 +19,7 @@ kernel_entry:
   # fix up virtual address
   li s2, phys_virt_offset
 
-  # load virtual address of `bootstacktop`
-  la sp, bootstacktop
+  # fix up virtual address of `bootstacktop`
   add sp, sp, s2
 
   # load virtual address of `kern_init`
