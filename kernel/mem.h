@@ -4,6 +4,7 @@
 #include "list.h"
 #include "types.h"
 #include "config.h"
+#include "riscv.h"
 
 /// Convert a virtual address to a physical address.
 static inline uint64_t virt_to_phys(uint64_t vaddr) {
@@ -47,6 +48,29 @@ typedef struct {
   list_entry_t link;
 } page_t;
 
+static inline void page_set_reserved(page_t* page) {
+  amo_set_bit(PG_RESERVED, &page->flags);
+}
+
+static inline void page_clear_reserved(page_t* page) {
+  amo_clear_bit(PG_RESERVED, &page->flags);
+}
+
+static inline bool page_is_reserved(page_t* page) {
+  return amo_test_bit(PG_RESERVED, &page->flags);
+}
+
+static inline void page_set_allocable(page_t* page) {
+  amo_set_bit(PG_ALLOCABLE, &page->flags);
+}
+
+static inline void page_clear_allocable(page_t* page) {
+  amo_clear_bit(PG_ALLOCABLE, &page->flags);
+}
+
+static inline bool page_is_allocable(page_t* page) {
+  return amo_test_bit(PG_ALLOCABLE, &page->flags);
+}
 /// Free area
 typedef struct {
   /// Head of the free list
@@ -66,13 +90,13 @@ typedef struct {
   void (*init)();
 
   /// Initialize the memory map.
-  void (*init_memmap)(page_t*, uint64_t);
+  void (*init_memmap)(page_t*, size_t);
 
   /// Allocate several pages.
-  page_t* (*alloc_pages)(uint64_t);
+  page_t* (*alloc_pages)(size_t);
 
   /// Free several pages.
-  void (*free_pages)(page_t*, uint64_t);
+  void (*free_pages)(page_t*, size_t);
 
   /// Number of free pages.
   size_t (*num_free_pages)(void);
@@ -87,9 +111,13 @@ extern pmm_t *pmm;
 void init_pmm();
 
 /// Allocate several pages.
-page_t* alloc_pages(size_t num_pages);
+page_t* alloc_pages(size_t n);
 
 /// Free several pages.
-void free_pages(page_t* base, size_t num_pages);
+void free_pages(page_t* base, size_t n);
+
+static inline page_t* paddr_to_page(uint64_t paddr) {
+  return &page_array[(paddr - MEMORY_START_PADDR) / PGSIZE];
+}
 
 #endif

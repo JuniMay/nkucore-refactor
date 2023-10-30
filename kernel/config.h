@@ -1,6 +1,8 @@
 #ifndef KERNEL_CONFIG_H_
 #define KERNEL_CONFIG_H_
 
+#define MEMORY_START_PADDR 0x80000000
+
 /// Physical address of the end of the usable memory.
 #define MEMORY_END_PADDR 0x88000000
 

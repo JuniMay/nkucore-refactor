@@ -3,4 +3,7 @@
 
 #include "mem.h"
 
+extern free_area_t free_area;
+extern pmm_t pmm_first_fit;
+
 #endif
