@@ -26,8 +26,9 @@ KERNEL_OBJ_ASM = $(patsubst $(KERNEL_SRC_DIR)/%.s,$(BUILD_DIR)/%.o,$(KERNEL_SRC_
 
 KERNEL_OBJS = $(KERNEL_OBJ_C) $(KERNEL_OBJ_ASM)
 
-KERNEL_CFLAGS = -Wall -O -g -mcmodel=medany
-KERNEL_CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax -fno-stack-protector -fno-pie -no-pie
+KERNEL_CFLAGS = -Wall -Werror -O -g -mcmodel=medany
+KERNEL_CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
+KERNEL_CFLAGS += -fno-stack-protector -fno-pie -no-pie
 KERNEL_CFLAGS += -I$(KERNEL_INC_DIR)
 
 KERNEL_LDSCRIPT = linker/$(PLATFORM).ld
@@ -39,17 +40,17 @@ KERNEL_IMG = $(BUILD_DIR)/kernel.bin
 QEMU = qemu-system-riscv64
 QEMU_ARGS = -machine virt -nographic -bios $(BOOTLOADER) -kernel $(KERNEL_IMG)
 
-.PHONY: all build clean init
+.PHONY: all build clean qemu debug gdb
 
 all: build
 
 # Adjust rules to account for directory structure
 $(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.c
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(CC) $(KERNEL_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.s
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(AS) $(KERNEL_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/kernel.elf: $(KERNEL_OBJS) $(KERNEL_LDSCRIPT)

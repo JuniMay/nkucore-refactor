@@ -92,9 +92,6 @@ typedef struct {
 } page_allocator_t;
 
 extern page_t* page_array;
-extern size_t num_total_pages;
-
-extern page_allocator_t* pmm;
 
 /// Initailize the physical memory manager.
 void init_pmm();
@@ -113,4 +110,51 @@ static inline uint64_t page_to_paddr(page_t* page) {
   return ((page - page_array) << PGSHIFT) + MEMORY_START_PADDR;
 }
 
-#endif
+/// Process-specific virtual memory manager
+typedef struct {
+  /// Head of the region list
+  list_entry_t head;
+  /// Cached region link
+  list_entry_t* cached;
+  /// Virtual address of the page table
+  uint64_t pgtbl_vaddr;
+  /// Number of regions
+  size_t num_regions;
+} vmem_manager_t;
+
+/// Kernel memory allocation
+void* kmalloc(size_t size);
+
+/// Kernel memory deallocation
+void kfree(void* ptr, size_t size);
+
+#define VMEM_READ 0x1
+#define VMEM_WRITE 0x2
+#define VMEM_EXEC 0x4
+
+/// Virtual memory region
+typedef struct {
+  /// The manager of the region
+  vmem_manager_t* manager;
+  /// Virtual address of the start of the region
+  uint64_t st_vaddr;
+  /// Virtual address of the end of the region
+  uint64_t ed_vaddr;
+  /// Flags
+  uint64_t flags;
+  /// List link
+  list_entry_t link;
+} vmem_region_t;
+
+/// Create a page table entry given the ppn and flags.
+static inline pte_t make_pte(uint64_t ppn, uint64_t flags) {
+  return ((ppn << 10) | flags) & PTE_MASK;
+}
+
+/// Walk the page table and get pte.
+///
+/// If create is true, create the page table entry if it does not exist.
+pte_t* get_pte(uint64_t root_vaddr, uint64_t vaddr, bool create);
+
+
+#endif  // KERNEL_MEM_H_

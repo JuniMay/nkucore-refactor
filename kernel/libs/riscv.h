@@ -3,6 +3,8 @@
 
 #include "libs/types.h"
 
+typedef uint64_t pte_t;
+
 #define IRQ_U_SOFT 0
 #define IRQ_S_SOFT 1
 #define IRQ_H_SOFT 2
@@ -39,6 +41,35 @@
 
 #define PGSIZE 4096
 #define PGSHIFT 12
+
+#define PTE_V 0x001
+#define PTE_R 0x002
+#define PTE_W 0x004
+#define PTE_X 0x008
+#define PTE_U 0x010
+#define PTE_G 0x020
+#define PTE_A 0x040
+#define PTE_D 0x080
+
+/// Get the page index of the specified virtual address at the specified level.
+#define PX(level, vaddr) \
+  (((uint64_t)(vaddr) >> (PGSHIFT + (9 * (level)))) & 0x1ff)
+
+/// Page table entry mask.
+///
+/// Accroding to RISC-V privileged specification, highest bits are reserved for
+/// future use and must be zero. Note that bit 63 is used by Svnapot extension
+/// and bits 62-61 are used by Svpbmt extension.
+#define PTE_MASK 0x003ffffffffffff
+
+/// Mask to extract the physical address from a pte.
+#define PTE_PPN_MASK 0x003ffffffffffc00
+
+/// Convert the pte to a physical address.
+#define PTE2PADDR(pte) (((uint64_t)(pte) & PTE_PPN_MASK) << 2)
+
+/// Convert the physical address to a pte.
+#define PADDR2PPN(paddr) ((((uint64_t)(paddr) >> 2) & PTE_PPN_MASK) >> 10)
 
 #define write_csr(reg, val) asm volatile("csrw " #reg ", %0" ::"r"(val))
 
