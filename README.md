@@ -22,9 +22,9 @@ Note that some bugs in the original ucore are fixed in this project, and the lat
 ## Roadmap
 
 - [x] Lab0.5 & Lab1: Boot and setup traps.
-- [ ] Lab2: Physical memory management.
+- [x] Lab2: Physical memory management.
   - [x] Setup Sv39 paging in kernel.
-  - [ ] Physical memory management.
+  - [x] Physical memory management.
 - [ ] Lab3: Virtual memory management -- page replacement.
 - [ ] Lab4: Process management.
 - [ ] Lab5: User environment and system call.
