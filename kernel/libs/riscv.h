@@ -20,18 +20,19 @@ typedef uint64_t pte_t;
 #define IRQ_COP 12
 #define IRQ_HOST 13
 
-#define CAUSE_MISALIGNED_FETCH 0x0
-#define CAUSE_FAULT_FETCH 0x1
-#define CAUSE_ILLEGAL_INSTRUCTION 0x2
-#define CAUSE_BREAKPOINT 0x3
-#define CAUSE_MISALIGNED_LOAD 0x4
-#define CAUSE_FAULT_LOAD 0x5
-#define CAUSE_MISALIGNED_STORE 0x6
-#define CAUSE_FAULT_STORE 0x7
-#define CAUSE_USER_ECALL 0x8
-#define CAUSE_SUPERVISOR_ECALL 0x9
-#define CAUSE_HYPERVISOR_ECALL 0xa
-#define CAUSE_MACHINE_ECALL 0xb
+#define EXCEPTION_INST_ADDR_MISALIGNED 0x0
+#define EXCEPTION_INST_ACCESS_FAULT 0x1
+#define EXCEPTION_ILLEGAL_INST 0x2
+#define EXCEPTION_BREAKPOINT 0x3
+#define EXCEPTION_LOAD_ADDR_MISALIGNED 0x4
+#define EXCEPTION_LOAD_ACCESS_FAULT 0x5
+#define EXCEPTION_STORE_AMO_ADDR_MISALIGNED 0x6
+#define EXCEPTION_STORE_AMO_ACCESS_FAULT 0x7
+#define EXCEPTION_ECALL_FROM_U 0x8
+#define EXCEPTION_ECALL_FROM_S 0x9
+#define EXCEPTION_INST_PAGE_FAULT 0xc
+#define EXCEPTION_LOAD_PAGE_FAULT 0xd
+#define EXCEPTION_STORE_AMO_PAGE_FAULT 0xf
 
 #define IRQ_S_TIMER 5
 
@@ -50,6 +51,9 @@ typedef uint64_t pte_t;
 #define PTE_G 0x020
 #define PTE_A 0x040
 #define PTE_D 0x080
+
+/// Mask for the RSW field of a pte.
+#define PTE_RSW_MASK 0x300
 
 /// Get the page index of the specified virtual address at the specified level.
 #define PX(level, vaddr) \

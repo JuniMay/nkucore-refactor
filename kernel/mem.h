@@ -102,6 +102,13 @@ page_t* alloc_pages(size_t n);
 /// Free several pages.
 void free_pages(page_t* base, size_t n);
 
+static inline void page_dec_ref(page_t* page) {
+  page->ref -= 1;
+  if (page->ref == 0) {
+    free_pages(page, page->num_pages);
+  }
+}
+
 static inline page_t* paddr_to_page(uint64_t paddr) {
   return &page_array[(paddr - MEMORY_START_PADDR) >> PGSHIFT];
 }
@@ -132,6 +139,10 @@ void kfree(void* ptr, size_t size);
 #define VMEM_WRITE 0x2
 #define VMEM_EXEC 0x4
 
+/// The RSW bits of PTE. According to RISC-V privileged specification, these
+/// bits are used by supervisor software.
+#define PTE_SWAPPED 0x100
+
 /// Virtual memory region
 typedef struct {
   /// The manager of the region
@@ -147,14 +158,34 @@ typedef struct {
 } vmem_region_t;
 
 /// Create a page table entry given the ppn and flags.
-static inline pte_t make_pte(uint64_t ppn, uint64_t flags) {
+static inline pte_t vmem_make_pte(uint64_t ppn, uint64_t flags) {
   return ((ppn << 10) | flags) & PTE_MASK;
+}
+
+static inline void vmem_flush_tlb(uint64_t vaddr) {
+  asm volatile("sfence.vma %0" ::"r"(vaddr) : "memory");
 }
 
 /// Walk the page table and get pte.
 ///
 /// If create is true, create the page table entry if it does not exist.
-pte_t* get_pte(uint64_t root_vaddr, uint64_t vaddr, bool create);
+pte_t* vmem_get_pte(uint64_t root_vaddr, uint64_t vaddr, bool create);
 
+/// Establish a mapping from the virtual address to the physical address.
+///
+/// This function does not flush TLB.
+int vmem_map_page(pte_t* pte, page_t* page, uint64_t flags);
+
+/// Handle page fault
+int vmem_handle_pgfault(vmem_manager_t* manager, uint64_t vaddr, uint64_t cause);
+
+/// Swap in for the given virtual address.
+int vmem_swap_in(vmem_manager_t* manager, uint64_t vaddr, page_t** dst_page);
+
+/// Swap out n pages.
+int vmem_swap_out(vmem_manager_t* manager, uint64_t n);
+
+/// Map the page as swappable
+int vmem_map_swappable(vmem_manager_t* manager, uint64_t vaddr, page_t* page, bool swap_in);
 
 #endif  // KERNEL_MEM_H_

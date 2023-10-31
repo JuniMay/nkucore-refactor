@@ -9,5 +9,4 @@
 /// Assume there is a linear mapping from physical address to virtual address.
 #define PHYS_VIRT_OFFSET 0xffffffff40000000
 
-
-#endif
+#endif  // KERNEL_CONFIG_H_

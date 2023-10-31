@@ -6,4 +6,4 @@
 extern free_area_t free_area;
 extern page_allocator_t first_fit_page_allocator;
 
-#endif
+#endif  // KERNEL_ALLOCATORS_FIRST_FIT_H_

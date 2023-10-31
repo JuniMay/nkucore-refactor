@@ -6,4 +6,4 @@
 void vprintf(const char *fmt, va_list ap);
 void printf(const char* fmt, ...);
 
-#endif
+#endif  // KERNEL_LIBS_PRINTF_H_

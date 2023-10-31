@@ -6,6 +6,7 @@
 #include "libs/string.h"
 
 #include "allocators/first_fit.h"
+#include "swap_managers/clock.h"
 
 /// The page array for page descriptors.
 page_t* page_array;
@@ -198,7 +199,7 @@ void kfree(void* ptr, size_t size) {
   free_pages(page, num_pages);
 }
 
-pte_t* get_pte(uint64_t root_vaddr, uint64_t vaddr, bool create) {
+pte_t* vmem_get_pte(uint64_t root_vaddr, uint64_t vaddr, bool create) {
   pte_t* pgtbl = (pte_t*)root_vaddr;
 
   for (size_t level = 2; level > 0; level--) {
@@ -210,9 +211,154 @@ pte_t* get_pte(uint64_t root_vaddr, uint64_t vaddr, bool create) {
         return NULL;
       }
       memset(pgtbl, 0, PGSIZE);
-      *pte = make_pte(PADDR2PPN(virt_to_phys((uint64_t)pgtbl)), PTE_V);
+      *pte = vmem_make_pte(PADDR2PPN(virt_to_phys((uint64_t)pgtbl)), PTE_V);
     }
   }
 
   return &pgtbl[PX(0, vaddr)];
+}
+
+/// Find the vmem_region containing the vaddr.
+static vmem_region_t*
+vmem_find_rigion(vmem_manager_t* manager, uint64_t vaddr) {
+  assert(manager != NULL);
+
+  // check cache first.
+  if (manager->cached != NULL) {
+    vmem_region_t* vmem_region =
+      container_of(manager->cached, vmem_region_t, link);
+    if (vmem_region->st_vaddr <= vaddr && vaddr < vmem_region->ed_vaddr) {
+      return vmem_region;
+    }
+  }
+
+  list_entry_t* entry = &manager->head;
+  while ((entry = entry->next) != &manager->head) {
+    vmem_region_t* vmem_region = container_of(entry, vmem_region_t, link);
+    if (vmem_region->st_vaddr <= vaddr && vaddr < vmem_region->ed_vaddr) {
+      // set cache
+      manager->cached = entry;
+      return vmem_region;
+    }
+  }
+
+  return NULL;
+}
+
+int vmem_map_page(pte_t* pte, page_t* page, uint64_t flags) {
+  assert(pte != NULL);
+  assert(page != NULL);
+
+  if (*pte & PTE_V) {
+    // if the pte is valid, check the old page.
+    page_t* old_page = paddr_to_page(PTE2PADDR(*pte));
+    if (old_page == page) {
+      // the page is already mapped.
+      return 0;
+    } else {
+      // unmap the old page.
+      page_dec_ref(old_page);
+    }
+  }
+  page->ref += 1;
+  *pte = vmem_make_pte(PADDR2PPN(page_to_paddr(page)), flags);
+  return 0;
+}
+
+
+/// Swap in for the given virtual address.
+int vmem_swap_in(vmem_manager_t* manager, uint64_t vaddr, page_t** dst_page) {
+  // TODO
+  return 0;
+}
+
+/// Swap out n pages.
+int vmem_swap_out(vmem_manager_t* manager, uint64_t n) {
+  // TODO
+  return 0;
+}
+
+/// Map the page as swappable
+int vmem_map_swappable(vmem_manager_t* manager, uint64_t vaddr, page_t* page, bool swap_in) {
+  // TODO
+  return 0;
+}
+
+int vmem_handle_pgfault(
+  vmem_manager_t* manager,
+  uint64_t vaddr,
+  uint64_t cause
+) {
+  assert(manager != NULL);
+
+  // get the corresponding vmem_region
+  vmem_region_t* vmem_region = vmem_find_rigion(manager, vaddr);
+
+  if (vmem_region == NULL) {
+    printf("[ handle_pgfault ] invalid vaddr: %p\n", vaddr);
+    return -1;
+  }
+
+  // offset in the page is ignored.
+  vaddr = align_down(vaddr, PGSIZE);
+
+  // get/create the pte
+  pte_t* pte = vmem_get_pte(manager->pgtbl_vaddr, vaddr, true);
+
+  if (*pte & PTE_SWAPPED) {
+    // The page is swapped out before. The page should be swapped in.
+    page_t* page = NULL;
+
+    int r = vmem_swap_in(manager, vaddr, &page);
+
+    if (r != 0) {
+      panic("[ vmem_handle_pgfault ] cannot swap in.\n");
+      return -1;
+    }
+
+    assert(page != NULL);
+
+    r = vmem_map_swappable(manager, vaddr, page, true);
+
+    if (r != 0) {
+      panic("[ vmem_handle_pgfault ] cannot map swappable.\n");
+      return -1;
+    }
+
+    page->vaddr = vaddr;
+    assert(page->ref == 1);
+  } else {
+    // The page table entry is newly created. establish a new mapping.
+    page_t* page = alloc_pages(1);
+
+    if (page == NULL) {
+      panic("[ vmem_handle_pgfault ] cannot allocate page.\n");
+      return -1;
+    }
+
+    uint64_t flags = PTE_U | PTE_V;
+
+    if (vmem_region->flags & VMEM_WRITE) {
+      flags |= PTE_W;
+    }
+
+    if (vmem_region->flags & VMEM_READ) {
+      flags |= PTE_R;
+    }
+
+    vmem_map_page(pte, page, flags);
+    vmem_flush_tlb(vaddr);
+
+    int r = vmem_map_swappable(manager, vaddr, page, false);
+
+    if (r != 0) {
+      panic("[ vmem_handle_pgfault ] cannot map swappable.\n");
+      return -1;
+    }
+
+    page->vaddr = vaddr;
+    assert(page->ref == 1);
+  }
+
+  return 0;
 }
