@@ -55,9 +55,9 @@ static void check_pmm() {
   assert(p1 != NULL);
   assert(p2 != NULL);
 
-  assert(p0->num_pages == 123);
   assert(p1->num_pages == 256);
   assert(p2->num_pages == 179);
+  assert(p0->num_pages == 123);
 
   printf("[ check_pmm ] p0 vaddr: %p\n", p0);
   printf("[ check_pmm ] p1 vaddr: %p\n", p1);
@@ -74,6 +74,21 @@ static void check_pmm() {
   assert(page_allocator->num_free_pages() == num_free_pages);
   
   printf("[ check_pmm ] testcase 1 passed.\n");
+
+  p0 = alloc_pages(page_allocator->num_free_pages());
+  p1 = alloc_pages(17);
+
+  assert(p0 != NULL);
+  assert(p1 == NULL);
+  assert(p0->num_pages == num_free_pages);
+  assert(page_allocator->num_free_pages() == 0);
+
+  printf("[ check_pmm ] p0 vaddr: %p\n", p0);
+  printf("[ check_pmm ] p0 paddr: %p\n", page_to_paddr(p0));
+
+  free_pages(p0, num_free_pages);
+
+  assert(page_allocator->num_free_pages() == num_free_pages);
 
   printf("[ check_pmm ] all passed.\n");
 }

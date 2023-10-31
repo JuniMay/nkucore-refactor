@@ -49,15 +49,15 @@ typedef struct {
 } page_t;
 
 static inline void page_set_flags(page_t* page, uint64_t bits) {
-  amo_set_bits(bits, &page->flags);
+  amo_set_bits(&page->flags, bits);
 }
 
 static inline void page_clear_flags(page_t* page, uint64_t bits) {
-  amo_clear_bits(bits, &page->flags);
+  amo_clear_bits(&page->flags, bits);
 }
 
 static inline bool page_test_flags(page_t* page, uint64_t bits) {
-  return amo_test_bits(bits, &page->flags);
+  return (page->flags & bits) == bits;
 }
 
 /// Free area

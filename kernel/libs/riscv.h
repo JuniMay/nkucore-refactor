@@ -53,11 +53,11 @@
 
 #define clear_csr(reg, bit) write_csr(reg, read_csr(reg) & ~(bit))
 
-#define read_gpr(reg) \
-  ({                  \
-    unsigned long __tmp; \
+#define read_gpr(reg)                           \
+  ({                                            \
+    unsigned long __tmp;                        \
     asm volatile("mv %0, " #reg : "=r"(__tmp)); \
-    __tmp; \
+    __tmp;                                      \
   })
 
 static inline void enable_interrupts() {
@@ -84,21 +84,16 @@ static inline void restore_interrupts(bool enabled) {
   }
 }
 
-/// Atomically set bit of the value at addr using amoor
-static inline void amo_set_bits(uint64_t bit, volatile void* addr) {
-  asm volatile("amoor.d zero, %0, %1" ::"r"(bit), "A"(addr));
+static inline void amo_set_bits(volatile void* ptr, uint64_t bits) {
+  asm volatile("amoor.d zero, %1, %0"
+               : "+A"(*(volatile uint64_t*)ptr)
+               : "r"(bits));
 }
 
-/// Atomically clear bit of the value at addr.
-static inline void amo_clear_bits(uint64_t bit, volatile void* addr) {
-  asm volatile("amoand.d zero, %0, %1" ::"r"(~bit), "A"(addr));
-}
-
-/// Atomically test bit of the value at addr.
-static inline bool amo_test_bits(uint64_t bit, volatile void* addr) {
-  uint64_t tmp;
-  asm volatile("amoand.d %0, %1, %2" : "=r"(tmp) : "r"(bit), "A"(addr));
-  return tmp != 0;
+static inline void amo_clear_bits(volatile void* ptr, uint64_t bits) {
+  asm volatile("amoand.d zero, %1, %0"
+               : "+A"(*(volatile uint64_t*)ptr)
+               : "r"(~bits));
 }
 
 #endif  // KERNEL_LIBS_RISCV_H_

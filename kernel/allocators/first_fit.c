@@ -1,4 +1,5 @@
 #include "allocators/first_fit.h"
+#include "libs/panic.h"
 
 static void first_fit_init() {
   list_init(&free_area.head);
@@ -6,15 +7,21 @@ static void first_fit_init() {
 }
 
 static void first_fit_init_memmap(page_t* base, size_t n) {
+  assert(n > 0);
+  assert(list_empty(&free_area.head));
+  assert(free_area.num_free_pages == 0);
+
   page_t* page = base;
   for (; page != base + n; page++) {
+    assert(page_test_flags(page, PG_RESERVED));
+    page->ref = 0;
     page->flags = 0;
     page->num_pages = 0;
-    page->ref = 0;
   }
 
   base->num_pages = n;
   page_set_flags(base, PG_ALLOCABLE);
+  assert(page_test_flags(base, PG_ALLOCABLE));
   free_area.num_free_pages += n;
 
   // Assume list empty.
@@ -41,6 +48,8 @@ static page_t* first_fit_alloc_pages(size_t n) {
     return NULL;
   }
 
+  assert(page_test_flags(page, PG_ALLOCABLE));
+
   if (page->num_pages > n) {
     page_t* new_page = page + n;
     new_page->num_pages = page->num_pages - n;
@@ -57,14 +66,20 @@ static page_t* first_fit_alloc_pages(size_t n) {
 }
 
 static void first_fit_free_pages(page_t* base, size_t n) {
+  assert(base->num_pages == n);
+
   page_t* page = base;
   for (; page != base + n; page++) {
-    page->flags = 0;
+    assert(!page_test_flags(page, PG_RESERVED));
+    assert(!page_test_flags(page, PG_ALLOCABLE));
     page->ref = 0;
+    page->flags = 0;
   }
 
   base->num_pages = n;
   page_set_flags(base, PG_ALLOCABLE);
+
+  assert(page_test_flags(base, PG_ALLOCABLE));
 
   free_area.num_free_pages += n;
 
@@ -91,6 +106,9 @@ static void first_fit_free_pages(page_t* base, size_t n) {
     if (page + page->num_pages == base) {
       page->num_pages += base->num_pages;
       page_clear_flags(base, PG_ALLOCABLE);
+
+      assert(!page_test_flags(base, PG_ALLOCABLE));
+
       list_del(&(base->link));
       base = page;
     }
@@ -102,6 +120,9 @@ static void first_fit_free_pages(page_t* base, size_t n) {
     if (base + base->num_pages == page) {
       base->num_pages += page->num_pages;
       page_clear_flags(page, PG_ALLOCABLE);
+
+      assert(!page_test_flags(page, PG_ALLOCABLE));
+
       list_del(&(page->link));
     }
   }
