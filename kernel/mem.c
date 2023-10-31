@@ -20,6 +20,9 @@ free_area_t free_area;
 /// The page allocator.
 page_allocator_t* page_allocator = &first_fit_page_allocator;
 
+/// The swap manager.
+vmem_swap_manager_t* swap_manager = NULL;
+
 static void check_pmm() {
   printf("[ check_pmm ] checking pmm...\n");
 
@@ -264,7 +267,6 @@ int vmem_map_page(pte_t* pte, page_t* page, uint64_t flags) {
   *pte = vmem_make_pte(PADDR2PPN(page_to_paddr(page)), flags);
   return 0;
 }
-
 
 /// Swap in for the given virtual address.
 int vmem_swap_in(vmem_manager_t* manager, uint64_t vaddr, page_t** dst_page) {

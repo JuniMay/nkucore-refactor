@@ -166,6 +166,28 @@ static inline void vmem_flush_tlb(uint64_t vaddr) {
   asm volatile("sfence.vma %0" ::"r"(vaddr) : "memory");
 }
 
+typedef struct {
+  const char* name;
+
+  /// Initialize the manager.
+  void (*init)();
+
+  /// Initialize a virtual memory manager.
+  int (*init_vmem_manager)(vmem_manager_t* manager);
+
+  /// Tick event handler.
+  int (*tick_event)(vmem_manager_t* manager);
+
+  /// Map the page swappable when the page is swapped in/created.
+  int (*map_swappable)(vmem_manager_t* manager, uint64_t vaddr, page_t* page, bool swap_in);
+
+  /// Set the page unswappable.
+  int (*set_unswappable)(vmem_manager_t* manager, uint64_t vaddr);
+
+  /// Swap in for the given virtual address.
+  int (*swap_out_victim)(vmem_manager_t* manager, page_t** dst_page, bool in_tick);
+} vmem_swap_manager_t;
+
 /// Walk the page table and get pte.
 ///
 /// If create is true, create the page table entry if it does not exist.
@@ -187,5 +209,17 @@ int vmem_swap_out(vmem_manager_t* manager, uint64_t n);
 
 /// Map the page as swappable
 int vmem_map_swappable(vmem_manager_t* manager, uint64_t vaddr, page_t* page, bool swap_in);
+
+/// Initialze swap manager
+int vmem_swap_init();
+
+/// Initialize swap for the given manager.
+int vmem_swap_init_manager(vmem_manager_t* manager);
+
+/// Tick event handler.
+int vmem_swap_tick_event(vmem_manager_t* manager);
+
+/// Set the page unswappable.
+int vmem_swap_set_unswappable(vmem_manager_t* manager, uint64_t vaddr);
 
 #endif  // KERNEL_MEM_H_
